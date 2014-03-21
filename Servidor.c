@@ -61,9 +61,10 @@ while(1){
 			exit(-1);
 		}
 		
-printf("Se obtuvo informacion desde %s\n", inet_ntoa(infoClient.sin_addr));
+printf("Se obtuvo informacion desde %d\n",infoClient.sin_addr);     //inet_ntoa(infoClient.sin_addr)
  
 	send(sock_conectado,"Bienvenido al servidor.\n",35,0);
+	send(sock_conectado,"Felicidades .\n",35,0);
 	close(sock_conectado);	
 	}
 }

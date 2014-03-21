@@ -45,20 +45,21 @@ int main (int argc, char *texto[])
 		}*/
 		
 	
-	if (connect(sock, (struct sockaddr *)&servidor, sizeof(struct sockaddr_in))<0)
+	if (connect(sock, (struct sockaddr *)&servidor, sizeof(servidor))<0) //struct sockaddr_in estaba en el sizeof()
 		{	
 			perror("Error connect()");
 			exit(0);
 		}
 		
+	//while(1){	
 	if ((nbytes=recv(sock,buffer,MAXTAM,IPPROTO_TCP))==-1){
 		printf("Error en recv");
-		exit(0);
+		exit(-1);
 		}
-	buffer[nbytes]='\0';
+	buffer[MAXTAM]='\0';
 	
 	printf("Mensaje del servidor: %s\n",buffer);
-	
+	//}
 	close(sock);
 	
 
