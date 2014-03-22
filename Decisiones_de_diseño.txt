@@ -1,0 +1,48 @@
+int main (int argc, char*texto[])
+
+cliente(2,  ./clientom[0] y IP[1])
+
+-----------------------------------------------
+
+scanf(); el nombre del contacto
+char texto[] = {puertocontacto,ipcontacto}
+
+-----------------------------------------------
+1- Importar contactos
+2- Menú de funciones
+	a) comenzar conexion
+	b) agregar contacto
+	c) eliminar contacto
+a) 
+    -aa)Empieza a escuchar el server
+	Comienza a correr el server: 
+	Imprimir: "ya está conectado esperando a que alguien le escriba"
+	Presione ESC para salir
+
+    VOLVER A PREGUNTAR SI ESCUCHAR o COMENZAR
+
+    -ab)Comenzar conversacion
+	FORK()    	
+	escoja el contacto...
+    	cliente(ip contacto)
+    	COMIENZA A ESCRIBIR
+	Presione ESC para terminar la conversacion
+	ESC
+	Cerramos cliente
+Termina el programa (cerrar el server)
+
+---------------------------------------------------------------
+Para borrar un contacto:
+	Sustituir el ultimo contacto por el contacto a borrar
+		[2] <-------> [50]
+	Borrar el ultimo contacto (que seria el contacto a borrar):
+		Set all members to NULL
+---------------------------------------------------------------
+Para ingresar un contacto:
+	Tener la variable numContactos como global
+	if numContactos < 100
+		preguntar por los 3 campos
+		crear el contacto
+	else
+		printf("Usted ha excedido la cantidad posible de contac")
+---------------------------------------------------------------
