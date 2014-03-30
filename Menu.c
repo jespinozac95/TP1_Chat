@@ -1,7 +1,15 @@
-#include <stdio.h>
+#include <sys/types.h> // Librería utilizada para la creación de sockets
+#include <sys/socket.h> //Librería utilizada para la creación de sockets
+#include <stdio.h> //Librería utilizada para las entradas y salidas
+#include <unistd.h>
+#include <netinet/in.h> //Librería necesaria para la implementación de la función bind() 
+#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+//#define PUERTO 8884 //Macro que establece el puerto a utilizar
+#define MAXTAM 256 //Macro para especificar el tamaño máximo del arreglo del mensaje recibido
 
 //Macros para los colores de texto
 #define Rojo "\x1b[31m"
@@ -18,6 +26,201 @@ typedef struct{
 	char ip[100];
 	int puerto;
 } contacto;
+
+void servidor(int puerto)
+{
+int i, salidaServidor = 1, salidaCliente=1;	
+int estado=0;
+int pid=0;
+char buffer[MAXTAM]="";
+char buffer1[MAXTAM]="";
+
+struct sockaddr_in infoSocket;
+
+struct sockaddr_in infoClient;
+
+int sock, sock_conectado; 
+//tamEst;
+
+if ((sock=socket(PF_INET,SOCK_STREAM,0))==-1)
+	{
+	perror("Error en sockets");
+	exit(0);
+	}
+
+
+infoSocket.sin_family=AF_INET;
+infoSocket.sin_port=htons(puerto);
+infoSocket.sin_addr.s_addr=INADDR_ANY;
+
+bzero(&(infoSocket.sin_zero),8);
+//int bind(int socket1,struct sockaddr_in *addr, int adddrlen); 
+/* adddr: puntero a la estructura sockaddr_in convertida a sockaddr 
+ * addrlen: tamaño de la estructura apuntada por el puntero addr
+ * devuelve:
+ * 			0 si sucede correctamente
+ * 			<0 si existe error*/
+ estado=bind(sock,(struct sockaddr *)&infoSocket, sizeof(struct sockaddr_in));
+ if (estado==-1)
+	{
+	 perror("Error bind");
+	 exit(0);
+	}
+estado=listen(sock,5);
+
+if (estado==-1)
+	{
+		perror("Error listen");
+		exit(0);
+	}
+for(;;)
+
+{
+	
+	socklen_t tamEst; 
+	tamEst=sizeof(struct sockaddr_in);
+	if ((sock_conectado=accept(sock,(struct sockaddr *)&infoClient,&tamEst))==-1)
+		{
+			perror("accept");
+			exit(-1);
+		}
+	
+	pid=fork();
+	
+	switch(pid)
+	{
+		case -1:
+			perror("Error en fork()");
+			exit(1);
+		case 0:
+			//close(sock);
+			
+			//if (sock_conectado=accept(sock, (struct sockaddr *) &infoClient, &tamEst))
+			if (-1 == getpeername(sock_conectado, (struct sockaddr *) &infoClient, &tamEst))
+			{	
+				perror("Error accept()");
+				exit(-1);
+			}
+			else 
+			{
+				printf("Conexion Establecida. Presione S para salir\n");
+				//printf("Se obtuvo informacion desde %d\n",infoClient.sin_addr); 
+				
+				send(sock_conectado, "Bienvenido al servidor. Digite <Salir> para terminar la conversacion. \n",72,0);
+				//buffer[i]='\0';
+				
+				while ((salidaServidor!=0) && (salidaCliente !=0)){
+				
+				
+				
+				estado = read(sock_conectado, buffer1, sizeof(buffer1));
+			
+				salidaCliente = strcmp(buffer1,"salir\n");
+
+				if (salidaCliente==0){
+
+				printf("cliente: el cliente termino la conversacion");
+				close(sock_conectado);
+				break; 
+				}
+				else{
+				printf(Rojo "cliente: " ResetColor "%s\n" ResetColor, buffer1);
+				for(i=0;i<=255;i++) buffer1[i]=0;}
+				
+				
+				
+				printf(Azul  "SERVIDOR: "  ResetColor);
+				fgets(buffer,2560,stdin);
+				salidaServidor = strcmp(buffer,"salir\n");
+				if (salidaServidor==0){
+					printf("servidor: se termino la conversacion");
+					send(sock_conectado,"salir\n",256,0);
+					close(sock_conectado);
+					break; }
+				else{
+					send(sock_conectado,buffer,256,0);
+					for(i=0;i<=255;i++) buffer[i]=0;
+					}
+			}
+			}
+	close(sock_conectado);	
+}
+}
+}
+
+void cliente (char *texto[],int puerto)    //int argc, char *texto[] !IP,Puerto!
+	{
+		printf("\nPrueba: texto = %s\n",texto);
+		int sock; //Número enteros para asignación del socket
+		char buffer[MAXTAM]; //Donde se almacenará el mensaje
+		char buffer1[MAXTAM];
+		int estado;
+		struct hostent *he; 
+		struct sockaddr_in servidor; //Permite trabajar con funciones que involucran direcciones de internet
+		int i, salidaServidor = 1, salidaCliente=1;	
+	
+		if ((he=gethostbyname(texto))==NULL){ //Obtiene la dirección IP de acuerdo a lo ingresado por el usuario    texto[0]
+			printf("gethostbyname() error\n");
+			exit(0);
+		}
+	
+	if((sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))==-1){ //Crea el socket 
+		printf("socket() error\n");
+		exit(-1);
+	}
+		
+	servidor.sin_family=AF_INET;
+	servidor.sin_port=htons(puerto);
+	//servidor.sin_addr.s_addr=INADDR_ANY; 
+	servidor.sin_addr=*((struct in_addr *)he->h_addr);
+	bzero(&(servidor.sin_zero),8);
+	
+	
+
+		
+	estado=connect(sock, (struct sockaddr *)&servidor, sizeof(servidor));
+	if (estado==-1) //Condición que solicita el valor
+		{	
+			perror("Error connect()");
+			exit(-1);
+		}
+		
+		
+	while((salidaServidor!=0) && (salidaCliente !=0))
+	
+				{
+			
+					estado= read(sock,buffer,sizeof(buffer));
+					salidaServidor = strcmp(buffer,"salir\n");
+					
+					if (salidaServidor==0){
+					send(sock,buffer,256,0);
+					printf("servidor: se termino la conversacion");
+					close(sock);
+					break; 
+					}
+					else {
+					printf("servidor: %s",buffer);
+					for(i=0;i<=255;i++) buffer[i]=0;
+					}
+					
+					printf("CLIENTE: ");
+					fgets(buffer1,256,stdin);
+					salidaCliente=strcmp(buffer1,"salir\n");
+					if(salidaCliente==0){
+						send(sock,buffer1,256,0);
+						close(sock);
+						}
+				    else {
+						send(sock,buffer1,256,0);
+						for(i=0;i<=255;i++) buffer1[i]=0;}
+				}
+			
+
+
+	close(sock);
+}
+
 
 //Funcion: imprimir los miembros de un contacto
 //Entradas: un puntero hacia el contacto a imprimirle los miembros
@@ -147,11 +350,6 @@ int main(){
 	int numero = 0; //Variable para iterar en el arreglo de contactos
 	char busquedaNombre[100]; //Variable para buscar un contacto en el arreglo de contactos
 	
-	//Variables que almacenarán los datos del contacto para enviarle mensajes
-	char conversacionNombre[100];
-	char conversacionIP[100];
-	int conversacionPuerto;
-	
 	int encontrado = 1; //Variable para saber si se encontró el contacto requerido
 	
 	//Ciclo del menu --> para que vuelva al menu despues de usar una funcionalidad
@@ -241,31 +439,46 @@ int main(){
 					printf(Azul "Usted no puede enviar mensajes porque no tiene contactos, agregue alguno.\n" ResetColor);
 				}
 				else {
-					printf("Ingrese el nombre del contacto a buscar: ");
-					scanf("%s",busquedaNombre); //Obtener el nombre del contacto a buscar
-					while (getchar()!='\n');
-					printf("busquedaNombre = %s\n",busquedaNombre);
 					
-					while (numero < numContacto){ //Analizar contactos
-						if (strncmp(contactos[numero].nombre,busquedaNombre,100) == 0){
-							encontrado = 0;
-							break;
+			
+						//COMIENZA EL CHAT
+						
+					
+						printf("Escriba 1 para enviar mensaje (cliente), 2 para conectarse al chat (servidor): ");				
+						opcion = 0; //donde se almacenará el input de opción del usuario
+						scanf("%d",&opcion); //scanear el input del usuario
+						while ((opcion != 1) && (opcion != 2)){ //restricciones
+							printf("Escriba 1 para enviar mensaje (cliente), 2 para conectarse al chat (servidor): ");
+							while (getchar()!='\n');  //limpiar el registro de standard input hasta la nueva línea (soluciona que "ccc" no vaya a entrar al while 3 veces, solo 1)
+							scanf("%d",&opcion); //volver a scanear hasta llegar a un valor válido
 						}
-						numero++;
+	
+						if (opcion == 1){ //cliente
+							printf("Ingrese el nombre del contacto a mensajear: ");
+							scanf("%s",busquedaNombre); //Obtener el nombre del contacto a buscar
+							while (getchar()!='\n');
+							//printf("busquedaNombre = %s\n",busquedaNombre);
+							
+							while (numero < numContacto){ //Analizar contactos
+								if (strncmp(contactos[numero].nombre,busquedaNombre,100) == 0){
+									encontrado = 0;
+									break;
+								}
+								numero++;
+							}
+							if (encontrado == 0){ //Contacto encontrado
+								printf(Verde "\nConversación válida con: %s \n" ResetColor,contactos[numero].nombre);
+								cliente(contactos[numero].ip,contactos[numero].puerto); 
+							}						
+							else //No existe el contacto
+								printf(Rojo "El contacto no existe." ResetColor "\n");
+								
+							numero = 0; //reset para proximas busquedas
+							encontrado = 1; //reset para proximas busquedas
+						}
+						else  //servidor
+							servidor(PuertoServidor); 
 					}
-					if (encontrado == 0){ //Contacto encontrado
-						strncpy(conversacionNombre,contactos[numero].nombre,100);
-						strncpy(conversacionIP,contactos[numero].ip,100);
-						conversacionPuerto = contactos[numero].puerto;
-
-						printf(Azul "Conversación con: %s" ResetColor,contactos[numero].nombre);
-						//Chat
-					}
-					else
-						printf(Rojo "El contacto no existe." ResetColor "\n");
-					numero = 0;
-					encontrado = 1;
-				}
 				break;
 		}
 		//-----------------------------------------------------------------------------------
@@ -285,7 +498,7 @@ int main(){
 				scanf("%d",&opcion); //volver a scanear hasta llegar a un valor válido
 			}
 	}
-	printf("\nHasta la próxima.");
+	printf("\nHasta la próxima.\n");
 	//mandarlo a limpiar sockets con close() (y otras conexiones, si las hay) como dijo el profe "atexit"
 	return 0;
 }
