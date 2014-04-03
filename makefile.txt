@@ -1,0 +1,4 @@
+target:
+	gcc -o TP1_ChatMessenger TP1_ChatMessenger.c 
+clean:
+	rm -f *.o
